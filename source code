@@ -1,0 +1,57 @@
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+local trackingEnabled = false -- when join you need to toggle it first
+
+local function getNearestPlayer()
+    local nearestPlayer = nil
+    local shortestDistance = math.huge
+
+    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (player.Character.HumanoidRootPart.Position - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
+            if distance < shortestDistance and distance <= 25 then -- adjust yo  range here
+                shortestDistance = distance
+                nearestPlayer = otherPlayer
+            end
+        end
+    end
+
+    return nearestPlayer
+end
+
+-- toggle the camera tracking mode on or off
+local function toggleCameraTracking()
+    trackingEnabled = not trackingEnabled
+end
+
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end 
+
+    if input.KeyCode == Enum.KeyCode.R then -- edited keybind to R
+        toggleCameraTracking() 
+    end
+end)
+
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if trackingEnabled then
+        
+        if (camera.CFrame.Position - player.Character.Head.Position).Magnitude < 1 then -- 
+            local nearestPlayer = getNearestPlayer()
+            if nearestPlayer and nearestPlayer.Character and nearestPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local targetPosition = nearestPlayer.Character.HumanoidRootPart.Position
+                camera.CFrame = CFrame.new(camera.CFrame.Position, targetPosition)
+            else
+                
+                camera.CameraType = Enum.CameraType.Custom
+            end
+        else
+           
+            camera.CameraType = Enum.CameraType.Custom
+        end
+    else
+        
+        camera.CameraType = Enum.CameraType.Custom
+    end
+end)
